@@ -1,3 +1,18 @@
+﻿const firebaseConfig = {
+  apiKey: "AIzaSyB0uIxdiHbKPQ_msqIPWDEyyq0KHhUPJVA",
+  authDomain: "baraban-15164.firebaseapp.com",
+  databaseURL: "https://baraban-15164-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "baraban-15164",
+  storageBucket: "baraban-15164.firebasestorage.app",
+  messagingSenderId: "836479526930",
+  appId: "1:836479526930:web:9312fa9f8e3b5c0d80d0cb",
+  measurementId: "G-K615WMWKV8"
+};
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
+
 try { 
 const { createApp, ref, computed, onMounted } = Vue;
 
@@ -15,14 +30,17 @@ const app = createApp({
         const activeTeamDetails = ref(null);
 
         // Load Data
-        const loadData = () => {
-            const t = localStorage.getItem('uniliga_teams');
-            const p = localStorage.getItem('uniliga_players');
-            const s = localStorage.getItem('uniliga_schedule');
-            
-            if (t) teams.value = JSON.parse(t);
-            if (p) players.value = JSON.parse(p);
-            if (s) schedule.value = JSON.parse(s);
+                const loadData = () => {
+            db.ref('uniliga').on('value', snap => {
+                const data = snap.val();
+                if(data) {
+                    teams.value = data.teams || [];
+                    players.value = data.players || [];
+                    schedule.value = data.schedule || [];
+                }
+                calculateStandings();
+                calculateTopPlayers();
+            });
         };
 
         // Helpers
@@ -185,3 +203,4 @@ window.addEventListener('error', function(e) {
 app.mount('#app');
 
 } catch(e) { document.body.innerHTML = '<div style="padding:20px;color:red;z-index:9999;position:fixed;top:0;left:0;width:100%;height:100%;background:white;font-size:16px;"><h2>Asl Xatolik!</h2><p>' + e.stack + '</p></div>'; }
+

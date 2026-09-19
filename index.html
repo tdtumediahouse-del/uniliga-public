@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
@@ -6,6 +6,8 @@
     <title>TDTU MINI LIGA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -108,7 +110,7 @@
             <div v-if="activeMatchDetails" class="animate-fade-in px-2">
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-3 overflow-hidden">
                     <div class="bg-gray-50 text-center py-2 text-xs text-gray-500 font-bold border-b">
-                        {{activeMatchDetails.date}} • {{activeMatchDetails.time}}
+                        {{activeMatchDetails.date}} â€¢ {{activeMatchDetails.time}}
                         <span v-if="activeMatchDetails.status === 'technical'" class="text-red-500 ml-2">(Texnik mag'lubiyat)</span>
                     </div>
                     <div class="p-6 flex justify-between items-center">
@@ -139,15 +141,15 @@
                             </div>
                             <div class="w-[90%]">
                                 <div class="font-bold text-sm text-gray-800 flex items-center gap-1" :class="{'justify-end': getPlayerSafe(e.playerId) === activeMatchDetails.team1}">
-                                    <span v-if="e.type === 'goal' && getPlayerSafe(e.playerId) === activeMatchDetails.team1">⚽</span>
-                                    <span v-if="e.type === 'yellowCard' && getPlayerSafe(e.playerId) === activeMatchDetails.team1">🟨</span>
-                                    <span v-if="e.type === 'redCard' && getPlayerSafe(e.playerId) === activeMatchDetails.team1">🟥</span>
+                                    <span v-if="e.type === 'goal' && getPlayerSafe(e.playerId) === activeMatchDetails.team1">âš½</span>
+                                    <span v-if="e.type === 'yellowCard' && getPlayerSafe(e.playerId) === activeMatchDetails.team1">ðŸŸ¨</span>
+                                    <span v-if="e.type === 'redCard' && getPlayerSafe(e.playerId) === activeMatchDetails.team1">ðŸŸ¥</span>
                                     
                                     {{getPlayerName(e.playerId)}}
                                     
-                                    <span v-if="e.type === 'goal' && getPlayerSafe(e.playerId) === activeMatchDetails.team2">⚽</span>
-                                    <span v-if="e.type === 'yellowCard' && getPlayerSafe(e.playerId) === activeMatchDetails.team2">🟨</span>
-                                    <span v-if="e.type === 'redCard' && getPlayerSafe(e.playerId) === activeMatchDetails.team2">🟥</span>
+                                    <span v-if="e.type === 'goal' && getPlayerSafe(e.playerId) === activeMatchDetails.team2">âš½</span>
+                                    <span v-if="e.type === 'yellowCard' && getPlayerSafe(e.playerId) === activeMatchDetails.team2">ðŸŸ¨</span>
+                                    <span v-if="e.type === 'redCard' && getPlayerSafe(e.playerId) === activeMatchDetails.team2">ðŸŸ¥</span>
                                 </div>
                                 <div v-if="e.type === 'goal' && e.assistPlayerId" class="text-[11px] text-gray-500 mt-0.5">
                                     Assist: {{getPlayerName(e.assistPlayerId)}}
@@ -185,7 +187,7 @@
                         <div class="text-right flex gap-3">
                             <div class="text-center" v-if="playerStats[p.id] && playerStats[p.id].goals > 0">
                                 <div class="text-xs font-bold text-[#008000]">{{playerStats[p.id].goals}}</div>
-                                <div class="text-[9px] text-gray-400">⚽</div>
+                                <div class="text-[9px] text-gray-400">âš½</div>
                             </div>
                         </div>
                     </div>
@@ -219,7 +221,7 @@
 
             <!-- 4. STATS -->
             <div v-if="!activeMatchDetails && !activeTeamDetails && currentTab === 'stats'" class="animate-fade-in px-2">
-                <h3 class="font-bold text-xs text-gray-500 mb-2 px-1 uppercase tracking-wider">⚽ To'purarlar</h3>
+                <h3 class="font-bold text-xs text-gray-500 mb-2 px-1 uppercase tracking-wider">âš½ To'purarlar</h3>
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
                     <table class="w-full text-sm text-left">
                         <tbody class="divide-y divide-gray-100">
@@ -250,3 +252,4 @@
     <script src="app.js"></script>
 </body>
 </html>
+
