@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TDTU MINI LIGA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800">
+
+    <!-- DESKTOP BLOCKER -->
+    <div id="desktop-block">
+        <div class="logo-badge-lg"></div>
+        <h1>TDTU MINI LIGA</h1>
+        <p>Bu platforma faqat mobil qurilmalar uchun optimallashtirilgan</p>
+        <div class="phone-icon">
+            <i class="fas fa-mobile-alt"></i>
+        </div>
+        <h2>Iltimos, telefoningizda oching</h2>
+        <span class="qr-hint">Brauzeringiz orqali shu havolani telefoningizga yuboring</span>
+    </div>
+
+    <!-- MOBILE APP -->
+    <div id="app" v-cloak class="mobile-app">
+        <!-- Header -->
+        <header class="bg-[#008000] text-white sticky top-0 z-20 shadow-md">
+            <div class="flex justify-between items-center p-4">
+                <div class="flex items-center gap-3">
+                    <div class="logo-badge"></div>
+                    <div>
+                        <h1 class="text-xl font-bold tracking-wide">TDTU MINI LIGA</h1>
+                        <p class="text-xs text-green-100 uppercase tracking-widest">Toshkent Davlat Texnika Universiteti</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <div class="flex text-sm font-medium bg-[#006400] text-green-100">
+                <button @click="currentTab = 'matches'" class="flex-1 py-3 text-center transition duration-200 relative" :class="currentTab === 'matches' ? 'text-white font-bold' : ''">
+                    O'YINLAR
+                    <div v-if="currentTab === 'matches'" class="absolute bottom-0 left-0 w-full h-1 bg-white"></div>
+                </button>
+                <button @click="currentTab = 'table'" class="flex-1 py-3 text-center transition duration-200 relative" :class="currentTab === 'table' ? 'text-white font-bold' : ''">
+                    JADVAL
+                    <div v-if="currentTab === 'table'" class="absolute bottom-0 left-0 w-full h-1 bg-white"></div>
+                </button>
+                <button @click="currentTab = 'scorers'" class="flex-1 py-3 text-center transition duration-200 relative" :class="currentTab === 'scorers' ? 'text-white font-bold' : ''">
+                    TO'PURARLAR
+                    <div v-if="currentTab === 'scorers'" class="absolute bottom-0 left-0 w-full h-1 bg-white"></div>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 mt-2 pb-6">
+            
+            <!-- MATCHES -->
+            <div v-show="currentTab === 'matches'" class="animate-fade-in px-2 space-y-3">
+                <div v-for="(match, i) in matches.slice().reverse()" :key="i" class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+                    <div class="bg-gray-50 border-b border-gray-100 py-1.5 px-3 text-xs text-gray-500 flex justify-between font-medium">
+                        <span>{{ matches.length - i }}-TUR <span v-if="match.isTechnical" class="text-red-500 ml-2">(Texnik mag'lubiyat)</span></span>
+                        <span>Tugadi</span>
+                    </div>
+                    <div class="p-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">{{ getTeamName(match.team1).substring(0,2) }}</div>
+                                <span class="text-[15px]" :class="match.score1 > match.score2 ? 'font-bold text-black' : 'text-gray-700'">{{ getTeamName(match.team1) }}</span>
+                            </div>
+                            <span class="text-lg w-6 text-center" :class="match.score1 > match.score2 ? 'font-bold text-[#008000]' : 'text-gray-800 font-medium'">{{ match.score1 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <div class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">{{ getTeamName(match.team2).substring(0,2) }}</div>
+                                <span class="text-[15px]" :class="match.score2 > match.score1 ? 'font-bold text-black' : 'text-gray-700'">{{ getTeamName(match.team2) }}</span>
+                            </div>
+                            <span class="text-lg w-6 text-center" :class="match.score2 > match.score1 ? 'font-bold text-[#008000]' : 'text-gray-800 font-medium'">{{ match.score2 }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="matches.length === 0" class="text-center bg-white rounded-lg border border-gray-200 p-8 text-gray-400">
+                    <i class="far fa-calendar-times text-4xl mb-3"></i>
+                    <p>O'yinlar topilmadi</p>
+                </div>
+            </div>
+
+            <!-- STANDINGS -->
+            <div v-show="currentTab === 'table'" class="animate-fade-in px-2">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <table class="w-full text-[13px] text-left whitespace-nowrap">
+                        <thead class="text-gray-500 bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-2 py-2 w-8 text-center font-normal">#</th>
+                                <th class="px-2 py-2 font-normal">Jamoa</th>
+                                <th class="px-1 py-2 text-center font-normal w-6">O'</th>
+                                <th class="px-1 py-2 text-center font-normal w-6">G'</th>
+                                <th class="px-1 py-2 text-center font-normal w-6">D</th>
+                                <th class="px-1 py-2 text-center font-normal w-6">M</th>
+                                <th class="px-1 py-2 text-center font-normal w-8">T-F</th>
+                                <th class="px-3 py-2 text-center font-bold text-black w-8">O</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <tr v-for="(team, index) in standings" :key="team.id" class="hover:bg-gray-50" :class="{'border-l-4 border-l-[#008000]': index < 3}">
+                                <td class="px-2 py-3 text-center">
+                                    <div class="w-5 h-5 rounded-full inline-flex items-center justify-center text-xs" :class="index < 3 ? 'bg-[#008000] text-white' : 'text-gray-500'">{{ index + 1 }}</div>
+                                </td>
+                                <td class="px-2 py-3 font-medium text-gray-800">{{ team.name }}</td>
+                                <td class="px-1 py-3 text-center text-gray-600">{{ team.played }}</td>
+                                <td class="px-1 py-3 text-center text-gray-600">{{ team.won }}</td>
+                                <td class="px-1 py-3 text-center text-gray-600">{{ team.drawn }}</td>
+                                <td class="px-1 py-3 text-center text-gray-600">{{ team.lost }}</td>
+                                <td class="px-1 py-3 text-center text-gray-600">{{ team.gf - team.ga }}</td>
+                                <td class="px-3 py-3 text-center font-bold text-black bg-gray-50">{{ team.points }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TOP SCORERS -->
+            <div v-show="currentTab === 'scorers'" class="animate-fade-in px-2">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <table class="w-full text-[14px] text-left">
+                        <thead class="text-xs text-gray-500 bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-4 py-3 w-10 text-center font-normal">#</th>
+                                <th class="px-4 py-3 font-normal">O'yinchi</th>
+                                <th class="px-4 py-3 text-center font-bold text-black">Gollar</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <tr v-for="(scorer, index) in sortedScorers" :key="scorer.id" class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-center text-gray-500 font-medium">{{ index + 1 }}</td>
+                                <td class="px-4 py-3">
+                                    <div class="font-bold text-gray-800">{{ scorer.name }}</div>
+                                    <div class="text-xs text-gray-500">{{ getTeamName(scorer.team) }}</div>
+                                </td>
+                                <td class="px-4 py-3 text-center font-bold text-xl text-[#008000]">{{ scorer.goals }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div v-if="scorers.length === 0" class="text-center bg-white rounded-lg border border-gray-200 p-8 mt-4 text-gray-400">
+                    <i class="fas fa-shoe-prints text-3xl mb-3"></i>
+                    <p>Hozircha gollar yo'q</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
