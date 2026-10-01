@@ -1,255 +1,349 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#000503">
+    <meta name="description" content="TDTU Mini Liga — o'yinlar, natijalar, turnir jadvali va to'purarlar">
     <title>TDTU MINI LIGA</title>
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/vue@3.4.38/dist/vue.global.prod.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-800">
+<body>
 
-    <div id="desktop-block">
-        <div class="logo-badge-lg"></div>
-        <h1>TDTU MINI LIGA</h1>
-        <p>Bu platforma faqat mobil qurilmalar uchun optimallashtirilgan</p>
-        <div class="phone-icon"><i class="fas fa-mobile-alt"></i></div>
-        <h2>Iltimos, telefoningizda oching</h2>
-    </div>
+    <div class="bg-glow"><span></span><span></span><span></span></div>
+    <div class="bg-grid"></div>
 
-    <div id="app" v-cloak class="mobile-app relative pb-20">
-        
-        <!-- TOP HEADER -->
-        <header class="bg-[#008000] text-white sticky top-0 z-20 shadow-md">
-            <div class="flex justify-between items-center p-4">
-                <div class="flex items-center gap-3">
-                    <div class="logo-badge"></div>
-                    <div>
-                        <h1 class="text-xl font-bold tracking-wide">TDTU MINI LIGA</h1>
-                        <p class="text-[10px] text-green-100 uppercase tracking-widest">Toshkent Davlat Texnika Universiteti</p>
+    <div id="app" v-cloak>
+
+        <!-- KIRISH EKRANI -->
+        <transition name="splash">
+            <div v-if="showSplash" class="splash">
+                <div class="ring"><div class="logo-lg"></div></div>
+                <div class="name title shine">TDTU MINI LIGA</div>
+                <div class="line"></div>
+            </div>
+        </transition>
+
+        <div class="app-shell">
+
+            <!-- SARLAVHA -->
+            <header class="topbar">
+                <div class="glass">
+                    <div class="flex items-center gap-3 p-4">
+                        <div v-if="activeMatchDetails || activeTeamDetails" @click="goBack" class="btn btn-ghost" style="padding:10px 14px"><i class="fas fa-chevron-left"></i></div>
+                        <div v-else class="logo"></div>
+                        <div class="flex-1 min-w-0">
+                            <h1 class="title text-[15px] truncate">TDTU MINI LIGA</h1>
+                            <p class="label" style="font-size:9px">Toshkent davlat texnika universiteti</p>
+                        </div>
+                        <span class="chip chip-green flex items-center gap-1.5"><span class="dot-live"></span>{{ currentRound ? currentRound.round + '-TUR' : 'LIGA' }}</span>
                     </div>
+                    <transition name="fade">
+                        <nav v-if="!activeMatchDetails && !activeTeamDetails" class="tabs">
+                            <div class="pill" :style="{ width: 'calc((100% - 10px) / ' + tabs.length + ')', transform: 'translateX(' + tabIndex * 100 + '%)' }"></div>
+                            <button v-for="t in tabs" :key="t.id" @click="currentTab = t.id" :class="{ on: currentTab === t.id }">{{ t.label }}</button>
+                        </nav>
+                    </transition>
                 </div>
-            </div>
-            
-            <!-- MAIN NAVIGATION -->
-            <div v-if="!activeMatchDetails && !activeTeamDetails" class="flex overflow-x-auto hide-scrollbar text-sm font-medium bg-[#006400] text-green-100">
-                <button @click="currentTab = 'matches'" class="px-4 py-3 whitespace-nowrap transition duration-200 relative" :class="currentTab === 'matches' ? 'text-white font-bold' : ''">
-                    O'yinlar
-                    <div v-if="currentTab === 'matches'" class="absolute bottom-0 left-0 w-full h-1 bg-white"></div>
-                </button>
-                <button @click="currentTab = 'teams'" class="px-4 py-3 whitespace-nowrap transition duration-200 relative" :class="currentTab === 'teams' ? 'text-white font-bold' : ''">
-                    Jamoalar
-                    <div v-if="currentTab === 'teams'" class="absolute bottom-0 left-0 w-full h-1 bg-white"></div>
-                </button>
-                <button @click="currentTab = 'table'" class="px-4 py-3 whitespace-nowrap transition duration-200 relative" :class="currentTab === 'table' ? 'text-white font-bold' : ''">
-                    Jadval
-                    <div v-if="currentTab === 'table'" class="absolute bottom-0 left-0 w-full h-1 bg-white"></div>
-                </button>
-                <button @click="currentTab = 'stats'" class="px-4 py-3 whitespace-nowrap transition duration-200 relative" :class="currentTab === 'stats' ? 'text-white font-bold' : ''">
-                    Statistika
-                    <div v-if="currentTab === 'stats'" class="absolute bottom-0 left-0 w-full h-1 bg-white"></div>
-                </button>
-            </div>
-        </header>
+            </header>
 
-        <!-- BACK BUTTON FOR DETAILS -->
-        <div v-if="activeMatchDetails || activeTeamDetails" class="bg-gray-100 p-2 flex items-center border-b sticky top-[72px] z-10">
-            <button @click="goBack" class="text-[#008000] px-4 py-2 font-bold text-sm bg-white rounded shadow-sm"><i class="fas fa-chevron-left mr-2"></i> Orqaga</button>
+            <main class="px-3 pt-3">
+                <transition name="page" mode="out-in">
+
+                    <!-- O'YIN TAFSILOTLARI -->
+                    <section v-if="activeMatchDetails" key="match">
+                        <div class="glass p-5 mb-3 text-center">
+                            <div class="label mb-4">
+                                {{ formatDate(activeMatchDetails.date) }} • {{ activeMatchDetails.time }}
+                                <span v-if="activeMatchDetails.status === 'technical'" class="chip chip-red ml-1">TEXNIK</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="w-1/3 tap" @click="openTeamDetails(activeMatchDetails.team1)">
+                                    <img class="crest mx-auto mb-2" width="68" height="68" :src="teamLogo(activeMatchDetails.team1)" alt="">
+                                    <div class="font-extrabold text-sm leading-tight">{{ getTeamName(activeMatchDetails.team1) }}</div>
+                                </div>
+                                <div class="w-1/3">
+                                    <div v-if="activeMatchDetails.status === 'pending'" class="title text-2xl dim">VS</div>
+                                    <div v-else class="score-big" :key="activeMatchDetails.score1 + '-' + activeMatchDetails.score2">{{ activeMatchDetails.score1 }}:{{ activeMatchDetails.score2 }}</div>
+                                </div>
+                                <div class="w-1/3 tap" @click="openTeamDetails(activeMatchDetails.team2)">
+                                    <img class="crest mx-auto mb-2" width="68" height="68" :src="teamLogo(activeMatchDetails.team2)" alt="">
+                                    <div class="font-extrabold text-sm leading-tight">{{ getTeamName(activeMatchDetails.team2) }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-if="activeMatchDetails.status !== 'pending'" class="glass p-5">
+                            <div class="label text-center mb-5">O'yin tafsilotlari</div>
+                            <div v-if="!activeMatchDetails.events.length" class="text-center text-sm dim py-4">Tafsilotlar kiritilmagan</div>
+                            <div v-else class="timeline">
+                                <div v-for="(e, i) in activeMatchDetails.events" :key="e.id" class="ev" :style="{ '--i': i }">
+                                    <div class="side pr-6 text-right">
+                                        <template v-if="getPlayerSafe(e.playerId) === activeMatchDetails.team1">
+                                            <div class="font-bold text-sm">{{ eventIcon(e.type) }} {{ getPlayerName(e.playerId) }}</div>
+                                            <div v-if="e.type === 'goal' && e.assistPlayerId" class="text-[11px] dim">Assist: {{ getPlayerName(e.assistPlayerId) }}</div>
+                                        </template>
+                                    </div>
+                                    <div class="min">{{ e.minute }}'</div>
+                                    <div class="side pl-6 text-left">
+                                        <template v-if="getPlayerSafe(e.playerId) !== activeMatchDetails.team1">
+                                            <div class="font-bold text-sm">{{ getPlayerName(e.playerId) }} {{ eventIcon(e.type) }}</div>
+                                            <div v-if="e.type === 'goal' && e.assistPlayerId" class="text-[11px] dim">Assist: {{ getPlayerName(e.assistPlayerId) }}</div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- JAMOA TAFSILOTLARI -->
+                    <section v-else-if="activeTeamDetails" key="team">
+                        <div class="glass p-6 mb-3 text-center relative overflow-hidden">
+                            <div class="absolute inset-x-0 top-0 h-1" :style="{ background: activeTeamDetails.color, boxShadow: '0 0 20px ' + activeTeamDetails.color }"></div>
+                            <img class="crest mx-auto mb-3" width="92" height="92" :src="getTeamLogo(activeTeamDetails.color, activeTeamDetails.shortName)" alt="">
+                            <h2 class="title text-xl">{{ activeTeamDetails.name }}</h2>
+                            <p v-if="activeTeamDetails.faculty" class="text-sm muted mt-1">{{ activeTeamDetails.faculty }}</p>
+                            <div v-if="teamRow(activeTeamDetails.id)" class="grid grid-cols-4 gap-2 mt-5">
+                                <div class="glass-soft py-2"><div class="font-black text-lg">{{ teamRow(activeTeamDetails.id).place }}</div><div class="label" style="font-size:9px">O'rin</div></div>
+                                <div class="glass-soft py-2"><div class="font-black text-lg">{{ teamRow(activeTeamDetails.id).played }}</div><div class="label" style="font-size:9px">O'yin</div></div>
+                                <div class="glass-soft py-2"><div class="font-black text-lg">{{ teamRow(activeTeamDetails.id).gf }}:{{ teamRow(activeTeamDetails.id).ga }}</div><div class="label" style="font-size:9px">To'plar</div></div>
+                                <div class="glass-soft py-2"><div class="font-black text-lg text-green-400">{{ teamRow(activeTeamDetails.id).points }}</div><div class="label" style="font-size:9px">Ochko</div></div>
+                            </div>
+                        </div>
+                        <div class="label px-1 mb-2">Tarkib</div>
+                        <div class="space-y-2 stagger">
+                            <div v-for="(p, i) in getTeamPlayers(activeTeamDetails.id)" :key="p.id" :style="{ '--i': i }" class="glass p-3 flex items-center gap-3" style="border-radius:18px">
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black" :style="{ background: activeTeamDetails.color + '33', color: '#fff', border: '1px solid ' + activeTeamDetails.color + '88' }">{{ p.number || '-' }}</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-bold text-sm truncate">{{ p.firstName }} {{ p.lastName }}</div>
+                                    <div class="text-[11px] dim">{{ positionName(p.position) }}<span v-if="p.course"> • {{ p.course }}-kurs</span></div>
+                                </div>
+                                <div class="flex gap-2 text-xs font-bold" v-if="playerStats[p.id]">
+                                    <span v-if="playerStats[p.id].goals" class="chip chip-green">⚽ {{ playerStats[p.id].goals }}</span>
+                                    <span v-if="playerStats[p.id].assists" class="chip">🅰️ {{ playerStats[p.id].assists }}</span>
+                                    <span v-if="playerStats[p.id].yellowCards" class="chip">🟨 {{ playerStats[p.id].yellowCards }}</span>
+                                    <span v-if="playerStats[p.id].redCards" class="chip chip-red">🟥 {{ playerStats[p.id].redCards }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- O'YINLAR -->
+                    <section v-else-if="currentTab === 'matches'" key="matches">
+                        <div v-if="!loaded" class="space-y-3"><div v-for="n in 5" :key="n" class="skeleton"></div></div>
+                        <div v-else-if="!schedule.length" class="glass p-8 text-center">
+                            <i class="fas fa-calendar-xmark text-4xl dim mb-3"></i>
+                            <div class="font-bold mb-1">Kalendar tez orada e'lon qilinadi</div>
+                            <div class="text-sm muted mb-5">Liga universitet ruxsati olingach boshlanadi</div>
+                            <button class="btn btn-green" @click="currentTab = 'info'"><i class="fas fa-book-open"></i> Liga nizomi</button>
+                        </div>
+                        <div v-for="round in reversedSchedule" :key="'r' + round.round" class="mb-5">
+                            <div class="flex items-center gap-2 px-1 mb-2">
+                                <span class="label">{{ round.round }}-tur</span>
+                                <span class="flex-1 h-px" style="background:var(--line)"></span>
+                                <span class="text-[10px] dim">{{ roundDates(round) }}</span>
+                            </div>
+                            <div class="space-y-2 stagger">
+                                <div v-for="(m, i) in round.matches" :key="m.id" :style="{ '--i': i }" @click="openMatchDetails(m)" class="glass tap p-3 flex items-center" style="border-radius:20px">
+                                    <div class="w-[38%] flex items-center justify-end gap-2 min-w-0">
+                                        <span class="text-sm truncate" :class="m.status !== 'pending' && m.score1 > m.score2 ? 'font-extrabold text-white' : 'text-slate-300'">{{ getTeamName(m.team1) }}</span>
+                                        <img class="crest" width="28" height="28" :src="teamLogo(m.team1)" alt="">
+                                    </div>
+                                    <div class="w-[24%] text-center">
+                                        <div v-if="m.status === 'pending'">
+                                            <div class="font-black text-sm">{{ m.time }}</div>
+                                            <div class="text-[10px] dim">{{ shortDate(m.date) }}</div>
+                                        </div>
+                                        <div v-else class="score" :class="{ tech: m.status === 'technical' }">
+                                            <span :class="m.score1 >= m.score2 ? 'text-white' : 'text-slate-500'">{{ m.score1 }}</span>
+                                            <span class="text-slate-600">:</span>
+                                            <span :class="m.score2 >= m.score1 ? 'text-white' : 'text-slate-500'">{{ m.score2 }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="w-[38%] flex items-center gap-2 min-w-0">
+                                        <img class="crest" width="28" height="28" :src="teamLogo(m.team2)" alt="">
+                                        <span class="text-sm truncate" :class="m.status !== 'pending' && m.score2 > m.score1 ? 'font-extrabold text-white' : 'text-slate-300'">{{ getTeamName(m.team2) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- JAMOALAR -->
+                    <section v-else-if="currentTab === 'teams'" key="teams">
+                        <div v-if="loaded && !teams.length" class="glass p-8 text-center muted">Jamoalar hali qo'shilmagan</div>
+                        <div class="grid grid-cols-2 gap-3 stagger">
+                            <div v-for="(t, i) in teams" :key="t.id" :style="{ '--i': i }" @click="openTeamDetails(t.id)" class="glass tap p-4 text-center relative overflow-hidden">
+                                <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-28 h-28 rounded-full" :style="{ background: t.color, filter: 'blur(45px)', opacity: .35 }"></div>
+                                <img class="crest mx-auto mb-3 relative" width="64" height="64" :src="getTeamLogo(t.color, t.shortName)" alt="">
+                                <h3 class="font-extrabold text-sm leading-tight relative">{{ t.name }}</h3>
+                                <p class="text-[10px] dim mt-1 relative">{{ getTeamPlayers(t.id).length }} o'yinchi</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- TURNIR JADVALI -->
+                    <section v-else-if="currentTab === 'table'" key="table">
+                        <div class="glass overflow-hidden">
+                            <table class="ltable">
+                                <thead>
+                                    <tr><th style="width:34px">#</th><th style="text-align:left">JAMOA</th><th>O'</th><th>G</th><th>D</th><th>M</th><th>±</th><th>O</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(team, index) in standings" :key="team.id" :style="{ '--i': index }" @click="openTeamDetails(team.id)" class="cursor-pointer">
+                                        <td><span class="pos" :class="index < 3 && team.played ? 'pos-' + (index + 1) : ''">{{ index + 1 }}</span></td>
+                                        <td style="text-align:left">
+                                            <div class="flex items-center gap-2 min-w-0">
+                                                <img class="crest" width="22" height="22" :src="getTeamLogo(team.color, team.shortName)" alt="">
+                                                <span class="font-bold text-white truncate" style="max-width:110px">{{ team.name }}</span>
+                                            </div>
+                                        </td>
+                                        <td>{{ team.played }}</td>
+                                        <td>{{ team.won }}</td>
+                                        <td>{{ team.drawn }}</td>
+                                        <td>{{ team.lost }}</td>
+                                        <td :class="team.gf - team.ga > 0 ? 'text-green-400' : team.gf - team.ga < 0 ? 'text-red-400' : ''">{{ team.gf - team.ga > 0 ? '+' : '' }}{{ team.gf - team.ga }}</td>
+                                        <td class="pts">{{ team.points }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-[10px] dim px-2 mt-2">O' — o'yinlar, G — g'alaba, D — durang, M — mag'lubiyat, ± — to'plar farqi, O — ochko</p>
+                    </section>
+
+                    <!-- STATISTIKA -->
+                    <section v-else-if="currentTab === 'stats'" key="stats">
+                        <div class="label px-1 mb-2">⚽ To'purarlar</div>
+                        <div class="glass p-2 mb-5">
+                            <div v-if="!topScorers.length" class="text-center text-sm dim py-6">Hali gol urilmagan</div>
+                            <div v-for="(s, index) in topScorers" :key="s.id" class="flex items-center gap-3 p-2" style="animation: rise .5s var(--ease) both" :style="{ animationDelay: index * 60 + 'ms' }">
+                                <span class="pos" :class="index < 3 ? 'pos-' + (index + 1) : ''">{{ index + 1 }}</span>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-baseline">
+                                        <span class="font-bold text-sm truncate">{{ getPlayerName(s.id) }}</span>
+                                        <span class="font-black text-green-400 text-lg ml-2">{{ s.goals }}</span>
+                                    </div>
+                                    <div class="text-[10px] dim">{{ getTeamName(s.teamId) }}</div>
+                                    <div class="bar" :style="{ '--i': index }"><i :style="{ width: (s.goals / topScorers[0].goals * 100) + '%' }"></i></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="label px-1 mb-2">🅰️ Assistentlar</div>
+                        <div class="glass p-2">
+                            <div v-if="!topAssists.length" class="text-center text-sm dim py-6">Hali assist yo'q</div>
+                            <div v-for="(s, index) in topAssists" :key="s.id" class="flex items-center gap-3 p-2" style="animation: rise .5s var(--ease) both" :style="{ animationDelay: index * 60 + 'ms' }">
+                                <span class="pos" :class="index < 3 ? 'pos-' + (index + 1) : ''">{{ index + 1 }}</span>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-baseline">
+                                        <span class="font-bold text-sm truncate">{{ getPlayerName(s.id) }}</span>
+                                        <span class="font-black text-sky-400 text-lg ml-2">{{ s.assists }}</span>
+                                    </div>
+                                    <div class="text-[10px] dim">{{ getTeamName(s.teamId) }}</div>
+                                    <div class="bar blue" :style="{ '--i': index }"><i :style="{ width: (s.assists / topAssists[0].assists * 100) + '%' }"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+
+                    <!-- NIZOM: TURNIR HAQIDA -->
+                    <section v-else-if="currentTab === 'info'" key="info">
+                        <div class="glass p-6 mb-3 text-center relative overflow-hidden">
+                            <div class="absolute -top-16 left-1/2 -translate-x-1/2 w-56 h-56 rounded-full" style="background:#16a34a;filter:blur(70px);opacity:.35"></div>
+                            <div class="logo mx-auto relative" style="width:76px;height:76px"></div>
+                            <h2 class="title text-lg mt-4 relative">TDTU Mini Liga</h2>
+                            <p class="text-sm muted mt-1 relative">Fakultetlararo mini-futbol turniri</p>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2 mb-3 stagger">
+                            <div v-for="(f, i) in facts" :key="f.l" :style="{ '--i': i }" class="glass-soft glass py-3 px-1 text-center" style="border-radius:18px">
+                                <div class="font-black text-xl text-green-400">{{ f.v }}</div>
+                                <div class="label" style="font-size:9px;letter-spacing:1px">{{ f.l }}</div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 stagger">
+                            <div class="glass p-5" style="--i:0">
+                                <div class="label mb-3"><i class="fas fa-users text-green-400 mr-1"></i> Ishtirokchilar</div>
+                                <ul class="rules">
+                                    <li>Faqat TDTU talabalari ishtirok etadi.</li>
+                                    <li>Har bir jamoa bitta fakultet talabalaridan tuziladi.</li>
+                                    <li>Ligada 10 ta jamoa; har bir jamoada <b>8 nafar</b> o'yinchi: 5 nafar asosiy, 3 nafar zaxira.</li>
+                                </ul>
+                            </div>
+
+                            <div class="glass p-5" style="--i:1">
+                                <div class="label mb-3"><i class="fas fa-rotate text-green-400 mr-1"></i> Turnir tizimi</div>
+                                <ul class="rules">
+                                    <li>Bir davrali tizim: har bir jamoa qolgan 9 jamoa bilan bir martadan o'ynaydi.</li>
+                                    <li>Jami 9 tur, 45 ta o'yin, davomiyligi 2 oy.</li>
+                                    <li>O'yin 2 taymdan iborat: har bir taym <b>25 daqiqa</b>, oralig'ida 10 daqiqa tanaffus.</li>
+                                </ul>
+                            </div>
+
+                            <div class="glass p-5" style="--i:2">
+                                <div class="label mb-3"><i class="fas fa-location-dot text-green-400 mr-1"></i> Joy va vaqt</div>
+                                <p class="text-sm mb-3" style="color:#cbd5e1">72-sonli talabalar turar joyi hududidagi mini-futbol maydoni. Har hafta oxiri bitta tur o'tkaziladi.</p>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="glass-soft p-3">
+                                        <div class="font-extrabold text-sm mb-1">Shanba</div>
+                                        <div class="text-xs muted">17:00 • 18:00 • 19:00</div>
+                                    </div>
+                                    <div class="glass-soft p-3">
+                                        <div class="font-extrabold text-sm mb-1">Yakshanba</div>
+                                        <div class="text-xs muted">18:00 • 19:00</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="glass p-5" style="--i:3">
+                                <div class="label mb-3"><i class="fas fa-ranking-star text-green-400 mr-1"></i> Ochko va o'rinlar</div>
+                                <div class="grid grid-cols-3 gap-2 mb-3 text-center">
+                                    <div class="glass-soft py-2"><div class="font-black text-lg text-green-400">3</div><div class="text-[10px] dim">G'alaba</div></div>
+                                    <div class="glass-soft py-2"><div class="font-black text-lg">1</div><div class="text-[10px] dim">Durang</div></div>
+                                    <div class="glass-soft py-2"><div class="font-black text-lg text-slate-500">0</div><div class="text-[10px] dim">Mag'lubiyat</div></div>
+                                </div>
+                                <ul class="rules">
+                                    <li>Ochkolar teng bo'lsa: avval to'plar farqi, keyin urilgan to'plar soni hisobga olinadi.</li>
+                                    <li>Texnik mag'lubiyatda hisob 0:3 deb qayd etiladi.</li>
+                                </ul>
+                            </div>
+
+                            <div class="glass p-5" style="--i:4">
+                                <div class="label mb-3"><i class="fas fa-flag text-green-400 mr-1"></i> Hakamlar</div>
+                                <ul class="rules">
+                                    <li>O'yinlarni jismoniy tarbiya o'qituvchilari boshqaradi.</li>
+                                    <li>Xolislik uchun hakamlar talabalar orasidan tayinlanmaydi.</li>
+                                </ul>
+                            </div>
+
+                            <div class="glass p-5" style="--i:5">
+                                <div class="label mb-3"><i class="fas fa-wallet text-green-400 mr-1"></i> Badal va xarajatlar</div>
+                                <p class="text-sm mb-3" style="color:#cbd5e1">Har bir jamoa har bir o'yini uchun <b class="text-white">50 000 so'm</b> badal to'laydi. Yig'ilgan mablag' faqat liga xarajatlariga sarflanadi:</p>
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                    <div class="glass-soft p-3"><i class="fas fa-user-tie text-green-400 mr-1"></i> Hakamlar mehnat haqi</div>
+                                    <div class="glass-soft p-3"><i class="fas fa-trophy text-amber-400 mr-1"></i> Kubok, medal, sovg'alar</div>
+                                    <div class="glass-soft p-3"><i class="fas fa-futbol text-green-400 mr-1"></i> To'p va jihozlar</div>
+                                    <div class="glass-soft p-3"><i class="fas fa-globe text-sky-400 mr-1"></i> Sayt va tashkiliy ishlar</div>
+                                </div>
+                                <p class="text-xs dim mt-3">Turnir yakunida kirim-chiqim bo'yicha hisobot universitet ma'muriyatiga topshiriladi.</p>
+                            </div>
+                        </div>
+                    </section>
+                </transition>
+            </main>
         </div>
-
-        <main class="flex-1 mt-2">
-            
-            <!-- 1. MATCHES LIST -->
-            <div v-if="!activeMatchDetails && !activeTeamDetails && currentTab === 'matches'" class="animate-fade-in px-2 space-y-3">
-                <div v-if="schedule.length === 0" class="text-center p-8 bg-white rounded-lg border text-gray-400">
-                    Hali kalendar tuzilmagan
-                </div>
-                
-                <div v-for="round in reversedSchedule" :key="'r'+round.round" class="mb-4">
-                    <div class="text-[11px] font-bold text-gray-500 mb-2 px-1 uppercase tracking-wider">{{round.round}}-TUR O'YINLARI</div>
-                    
-                    <div class="space-y-2">
-                        <div v-for="m in round.matches" :key="m.id" @click="openMatchDetails(m)" class="bg-white rounded-lg p-3 shadow-sm border border-gray-200 flex items-center justify-between cursor-pointer active:bg-gray-50 transition">
-                            
-                            <div class="w-1/3 text-right font-medium text-sm truncate px-1 flex flex-col items-end">
-                                <div class="flex items-center gap-2">
-                                    <span :class="{'font-bold text-black': m.score1 > m.score2, 'text-gray-700': m.score1 <= m.score2}">{{getTeamName(m.team1)}}</span>
-                                    <div class="w-4 h-4 rounded-full shadow-sm" :style="'background-color:' + getTeamColor(m.team1)"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="w-1/3 text-center">
-                                <div v-if="m.status === 'pending'" class="text-[10px] text-gray-500 flex flex-col border-l border-r border-gray-100">
-                                    <span class="font-bold text-black">{{m.time}}</span>
-                                    <span>{{m.date ? m.date.substring(5).replace('-','/') : ''}}</span>
-                                </div>
-                                <div v-else class="text-xl font-bold px-3 py-1 flex justify-center gap-2" :class="{'text-red-500 text-sm': m.status === 'technical'}">
-                                    <span :class="{'text-[#008000]': m.score1 > m.score2, 'text-gray-400': m.score1 < m.score2}">{{m.score1}}</span>
-                                    <span class="text-gray-300">-</span>
-                                    <span :class="{'text-[#008000]': m.score2 > m.score1, 'text-gray-400': m.score2 < m.score1}">{{m.score2}}</span>
-                                </div>
-                            </div>
-                            
-                            <div class="w-1/3 text-left font-medium text-sm truncate px-1 flex flex-col items-start">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-4 h-4 rounded-full shadow-sm" :style="'background-color:' + getTeamColor(m.team2)"></div>
-                                    <span :class="{'font-bold text-black': m.score2 > m.score1, 'text-gray-700': m.score2 <= m.score1}">{{getTeamName(m.team2)}}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MATCH DETAILS -->
-            <div v-if="activeMatchDetails" class="animate-fade-in px-2">
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-3 overflow-hidden">
-                    <div class="bg-gray-50 text-center py-2 text-xs text-gray-500 font-bold border-b">
-                        {{activeMatchDetails.date}} â€¢ {{activeMatchDetails.time}}
-                        <span v-if="activeMatchDetails.status === 'technical'" class="text-red-500 ml-2">(Texnik mag'lubiyat)</span>
-                    </div>
-                    <div class="p-6 flex justify-between items-center">
-                        <div class="text-center w-1/3" @click="openTeamDetails(activeMatchDetails.team1)">
-                            <div class="w-16 h-16 mx-auto rounded-full mb-2 border-4 shadow-sm" :style="'border-color:' + getTeamColor(activeMatchDetails.team1) + '; background-color:' + getTeamColor(activeMatchDetails.team1) + '20'"></div>
-                            <div class="font-bold text-sm">{{getTeamName(activeMatchDetails.team1)}}</div>
-                        </div>
-                        <div class="w-1/3 text-center">
-                            <div v-if="activeMatchDetails.status === 'pending'" class="text-2xl font-bold text-gray-300">- : -</div>
-                            <div v-else class="text-4xl font-black text-gray-800">{{activeMatchDetails.score1}} - {{activeMatchDetails.score2}}</div>
-                        </div>
-                        <div class="text-center w-1/3" @click="openTeamDetails(activeMatchDetails.team2)">
-                            <div class="w-16 h-16 mx-auto rounded-full mb-2 border-4 shadow-sm" :style="'border-color:' + getTeamColor(activeMatchDetails.team2) + '; background-color:' + getTeamColor(activeMatchDetails.team2) + '20'"></div>
-                            <div class="font-bold text-sm">{{getTeamName(activeMatchDetails.team2)}}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div v-if="activeMatchDetails.status === 'finished'" class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                    <h3 class="font-bold text-xs text-gray-400 mb-4 uppercase tracking-wider text-center">O'yin Tafsilotlari</h3>
-                    <div v-if="!activeMatchDetails.events || activeMatchDetails.events.length === 0" class="text-center text-sm text-gray-400 py-4">
-                        Tafsilotlar kiritilmagan
-                    </div>
-                    <div v-else class="relative border-l-2 border-gray-100 ml-[50%]">
-                        <div v-for="e in activeMatchDetails.events" :key="e.id" class="relative mb-6" :class="{'right-[50%] pr-4 text-right flex justify-end': getPlayerSafe(e.playerId) === activeMatchDetails.team1, 'pl-4 text-left': getPlayerSafe(e.playerId) === activeMatchDetails.team2}">
-                            <div class="absolute top-0 w-8 h-8 bg-white border-2 border-gray-200 rounded-full flex items-center justify-center text-[10px] font-bold z-10" :class="{'right-[-16px]': getPlayerSafe(e.playerId) === activeMatchDetails.team1, 'left-[-16px]': getPlayerSafe(e.playerId) === activeMatchDetails.team2}">
-                                {{e.minute}}'
-                            </div>
-                            <div class="w-[90%]">
-                                <div class="font-bold text-sm text-gray-800 flex items-center gap-1" :class="{'justify-end': getPlayerSafe(e.playerId) === activeMatchDetails.team1}">
-                                    <span v-if="e.type === 'goal' && getPlayerSafe(e.playerId) === activeMatchDetails.team1">âš½</span>
-                                    <span v-if="e.type === 'yellowCard' && getPlayerSafe(e.playerId) === activeMatchDetails.team1">ðŸŸ¨</span>
-                                    <span v-if="e.type === 'redCard' && getPlayerSafe(e.playerId) === activeMatchDetails.team1">ðŸŸ¥</span>
-                                    
-                                    {{getPlayerName(e.playerId)}}
-                                    
-                                    <span v-if="e.type === 'goal' && getPlayerSafe(e.playerId) === activeMatchDetails.team2">âš½</span>
-                                    <span v-if="e.type === 'yellowCard' && getPlayerSafe(e.playerId) === activeMatchDetails.team2">ðŸŸ¨</span>
-                                    <span v-if="e.type === 'redCard' && getPlayerSafe(e.playerId) === activeMatchDetails.team2">ðŸŸ¥</span>
-                                </div>
-                                <div v-if="e.type === 'goal' && e.assistPlayerId" class="text-[11px] text-gray-500 mt-0.5">
-                                    Assist: {{getPlayerName(e.assistPlayerId)}}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. TEAMS LIST -->
-            <div v-if="!activeMatchDetails && !activeTeamDetails && currentTab === 'teams'" class="animate-fade-in px-2">
-                <div class="grid grid-cols-2 gap-3">
-                    <div v-for="t in teams" :key="t.id" @click="openTeamDetails(t.id)" class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center cursor-pointer">
-                        <div class="w-16 h-16 mx-auto rounded-full mb-3 shadow-md border-4 flex items-center justify-center font-bold text-xl text-white" :style="'border-color:' + t.color + '40; background-color:' + t.color">
-                            {{t.shortName}}
-                        </div>
-                        <h3 class="font-bold text-gray-800 text-sm leading-tight mb-1">{{t.name}}</h3>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TEAM DETAILS -->
-            <div v-if="activeTeamDetails" class="animate-fade-in px-2">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center mb-4 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-2" :style="'background-color:' + activeTeamDetails.color"></div>
-                    <h2 class="text-2xl font-black text-gray-800">{{activeTeamDetails.name}}</h2>
-                </div>
-                <div class="space-y-2">
-                    <div v-for="p in getTeamPlayers(activeTeamDetails.id)" :key="p.id" class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 flex items-center gap-4">
-                        <div class="w-10 h-10 rounded bg-gray-100 flex items-center justify-center font-black text-gray-400 border border-gray-200">{{p.number}}</div>
-                        <div class="flex-1">
-                            <div class="font-bold text-sm text-gray-800">{{p.firstName}} {{p.lastName}}</div>
-                        </div>
-                        <div class="text-right flex gap-3">
-                            <div class="text-center" v-if="playerStats[p.id] && playerStats[p.id].goals > 0">
-                                <div class="text-xs font-bold text-[#008000]">{{playerStats[p.id].goals}}</div>
-                                <div class="text-[9px] text-gray-400">âš½</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. TABLE -->
-            <div v-if="!activeMatchDetails && !activeTeamDetails && currentTab === 'table'" class="animate-fade-in px-2">
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    <table class="w-full text-[13px] text-left whitespace-nowrap">
-                        <thead class="text-gray-500 bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-2 py-3 w-8 text-center font-normal">#</th>
-                                <th class="px-2 py-3 font-normal">Jamoa</th>
-                                <th class="px-3 py-3 text-center font-bold text-black w-8">O</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <tr v-for="(team, index) in standings" :key="team.id" class="hover:bg-gray-50">
-                                <td class="px-2 py-3 text-center">{{ index + 1 }}</td>
-                                <td class="px-2 py-3 font-medium text-gray-800 flex items-center gap-2">
-                                    <div class="w-3 h-3 rounded-full" :style="'background-color:' + team.color"></div>
-                                    {{ team.name }}
-                                </td>
-                                <td class="px-3 py-3 text-center font-bold text-black bg-gray-50">{{ team.points }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- 4. STATS -->
-            <div v-if="!activeMatchDetails && !activeTeamDetails && currentTab === 'stats'" class="animate-fade-in px-2">
-                <h3 class="font-bold text-xs text-gray-500 mb-2 px-1 uppercase tracking-wider">âš½ To'purarlar</h3>
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
-                    <table class="w-full text-sm text-left">
-                        <tbody class="divide-y divide-gray-100">
-                            <tr v-for="(s, index) in topScorers" :key="s.id">
-                                <td class="px-3 py-3 w-8 text-center text-gray-400 font-bold">{{ index + 1 }}</td>
-                                <td class="px-3 py-3">
-                                    <div class="font-bold text-gray-800">{{ getPlayerName(s.id) }}</div>
-                                </td>
-                                <td class="px-4 py-3 text-center font-black text-lg text-[#008000]">{{ s.goals }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-        </main>
     </div>
-    
-    <script>
-    (function(){
-        var isLocal = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-        var isMobile = window.innerWidth <= 480;
-        if (!isLocal && !isMobile) {
-            document.getElementById('desktop-block').classList.add('active');
-        }
-    })();
-    </script>
+
     <script src="app.js"></script>
 </body>
 </html>
-
